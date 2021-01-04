@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from "@angular/core";
+import { Component, OnDestroy, ViewChild, ElementRef } from "@angular/core";
 import { Subscription } from "rxjs";
 import { StopWatch } from "./stop-watch.interface";
 import { TimeService } from "./timer.service";
@@ -10,6 +10,8 @@ import { TimeService } from "./timer.service";
 })
 
 export class AppComponent implements OnDestroy {
+  @ViewChild('wait') wait: ElementRef;
+
   public stopwatch: StopWatch;
   private subscriptions: Subscription = new Subscription();
 
@@ -26,8 +28,8 @@ export class AppComponent implements OnDestroy {
 
   }
 
-  public waitCount(): void {
-    this.timerService.waitCount();
+  public waitCount() {
+    this.timerService.waitCount(this.wait);
   }
 
   public resetCount(): void {

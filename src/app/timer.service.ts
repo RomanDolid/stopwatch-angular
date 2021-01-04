@@ -1,6 +1,6 @@
-import { Injectable } from "@angular/core";
-import { Observable, timer, BehaviorSubject, Subscription } from "rxjs";
-import { map } from "rxjs/operators";
+import { Injectable, ElementRef } from "@angular/core";
+import { Observable, timer, BehaviorSubject, Subscription, fromEvent, Subject } from "rxjs";
+import { map, buffer, debounceTime, filter } from "rxjs/operators";
 
 import { StopWatch } from "./stop-watch.interface";
 
@@ -9,16 +9,11 @@ import { StopWatch } from "./stop-watch.interface";
 })
 export class TimeService {
   private readonly initialTime = 0;
-
-
-  private timer$: BehaviorSubject<number> = new BehaviorSubject(
-    this.initialTime
-  );
+  private timer$: BehaviorSubject<number> = new BehaviorSubject(this.initialTime);
   private lastStopedTime: number = this.initialTime;
   private timerSubscription: Subscription = new Subscription();
   private isRunning: boolean = false;
 
-  constructor() {}
 
   public get stopWatch$(): Observable<StopWatch> {
     return this.timer$.pipe(
@@ -38,10 +33,25 @@ export class TimeService {
 
   }
 
-  waitCount(): void {
-    this.lastStopedTime = this.initialTime;
-    this.timerSubscription.unsubscribe();
-    this.isRunning = false;
+
+  waitCount(el: ElementRef): void {
+     if (this.isRunning) {
+      const clicks$ = fromEvent(el.nativeElement, 'click');
+
+      clicks$
+        .pipe(
+          buffer(clicks$.pipe(debounceTime(300))),
+          map((list) => {
+            return list.length;
+          }),
+          filter((x) => x === 2)
+        )
+        .subscribe(() => {
+          this.lastStopedTime = this.initialTime;
+          this.timerSubscription.unsubscribe();
+          this.isRunning = false;
+        });
+    }
   }
 
   resetCount(): void {
@@ -68,4 +78,5 @@ export class TimeService {
   private convertToNumberString(value: number): string {
     return `${value < 10 ? "0" + value : value}`;
   }
+
 }
